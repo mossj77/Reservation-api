@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, PermissionsMixin
+from django.utils.translation import gettext_lazy as _
 
 
 class UserManager(BaseUserManager):
@@ -39,3 +40,52 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
     USERNAME_FIELD = 'email'
 
+    def __str__(self):
+        return f'{self.f_name} {self.l_name}: {self.email}'
+
+
+class Hotel(models.Model):
+    name = models.CharField(max_length=255)
+    address = models.CharField(max_length=255, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
+    total_rooms = models.IntegerField(null=True, blank=True)
+    available_rooms = models.IntegerField(null=True, blank=True)
+    create_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+
+class Room(models.Model):
+
+    class RoomType(models.TextChoices):
+        SINGLE = 'SI', _('Single')
+        DOUBLE = 'DO', _('Double')
+        SUITE = 'SU', _('Suite')
+
+    hotel = models.ForeignKey(Hotel, related_name='rooms', on_delete=models.CASCADE)
+    room_number = models.IntegerField()
+    type = models.CharField(max_length=2, choices=RoomType.choices, default=RoomType.SINGLE)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    is_available = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f'{self.room_number}\'th room in {self.hotel.__str__()} hotel'
+
+
+class Reservation(models.Model):
+
+    class ReservationStatus(models.TextChoices):
+        PENDING = 'PE', _('Pending')
+        CONFIRMED = 'CO', _('Confirmed')
+        CANCELED = 'CA', _('Canceled')
+
+    user = models.ForeignKey(User, related_name='user', on_delete=models.CASCADE)
+    room = models.ForeignKey(Room, related_name='room', on_delete=models.CASCADE)
+    check_in = models.DateTimeField()
+    check_out = models.DateTimeField()
+    status = models.CharField(max_length=2, choices=ReservationStatus.choices, default=ReservationStatus.PENDING)
+    total_price = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self):
+        return f'Reservation: {self.user.__str__()} -> {self.room.__str__()}'
