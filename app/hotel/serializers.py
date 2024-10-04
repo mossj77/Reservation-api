@@ -59,3 +59,11 @@ class HotelSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(room_serializer.errors)
 
         return hotel
+
+
+class HotelImageSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Hotel
+        fields = ('id', 'image')
+        read_only = ('id', )
