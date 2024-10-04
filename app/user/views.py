@@ -1,6 +1,7 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.authtoken.models import Token
 
 from .serializers import *
 
@@ -59,3 +60,15 @@ class DeleteUserView(generics.DestroyAPIView):
             return Response({'message': 'user deleted successfully!'}, status.HTTP_200_OK)
         else:
             return Response({'message': 'user access denied!!'}, status.HTTP_401_UNAUTHORIZED)
+
+
+class LogoutView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated, ]
+
+    def post(self, request):
+        try:
+            token = Token.objects.get(user=request.user)
+            token.delete()
+            return Response({'message': 'logged out!'}, status=status.HTTP_200_OK)
+        except:
+            return Response({'error-message': 'token not found'}, status=status.HTTP_400_BAD_REQUEST)
