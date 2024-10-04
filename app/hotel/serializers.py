@@ -4,6 +4,8 @@ from core.models import Hotel, Room
 
 
 class RoomSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(required=False)
+
     class Meta:
         model = Room
         fields = ('id', 'room_number', 'price', 'type')
@@ -30,8 +32,11 @@ class HotelSerializer(serializers.ModelSerializer):
         hotel = super().update(instance, validated_data)
 
         for room_data in rooms_data:
-            room_instance = Room.objects.get('id')
-            room_instance.update(room_data)
-            room_instance.save()
+            room_instance = Room.objects.get(id=room_data.pop('id', None))
+            room_serializer = RoomSerializer(instance=room_instance, data=room_data, partial=True)
+            if room_serializer.is_valid():
+                room_serializer.save()
+            else:
+                raise serializers.ValidationError(room_serializer.errors)
 
         return hotel
